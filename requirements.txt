@@ -1,0 +1,9 @@
+flask
+waitress
+selenium
+flask_cors
+requests
+PyJWT
+firebase-admin
+dataclasses
+
