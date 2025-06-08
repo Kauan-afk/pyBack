@@ -9,7 +9,7 @@ from Controller.auth.auth_utils import verify_token
 from Controller.auth.delete_user import delete_user
 from Controller.listAll.test_bradesco_db import upload_test_bradesco, delete_test_bradesco
 from Controller.folder.crudFolder import (
-    create_folder, read_folder, update_folder, delete_folder,
+    create_folder, list_folders, read_folder, update_folder, delete_folder,
     add_property_to_folder, remove_property_from_folder
 )
 from Controller.filter.filter import filter_bradesco
@@ -112,64 +112,83 @@ def delete_bradesco_route():
     delete_test_bradesco()
     return jsonify({"message": "Test Bradesco data deleted."})
 
-@app.route("/folder", methods=["POST"])
+@app.route("/create_folder", methods=["POST"])
 @token_required
 def create_folder_route():
     data = request.json
-    folder_name = data.get("name")
-    if not folder_name:
+    name = data.get("name")
+    if not name:
         return jsonify({"error": "Missing folder name"}), 400
-    folder_id = create_folder(folder_name)
-    if folder_id:
-        return jsonify({"message": "Folder created", "id": folder_id})
-    return jsonify({"error": "Folder name already exists"}), 409
+    result = create_folder(name)
+    return jsonify(result)
 
-@app.route("/folder/<folder_id>", methods=["GET"])
+@app.route("/list_folders", methods=["GET"])
 @token_required
-def read_folder_route(folder_id):
-    folder = read_folder(folder_id)
-    if folder:
-        return jsonify(folder)
-    return jsonify({"error": "Folder not found"}), 404
+def list_folders_route():
+    result = list_folders()
+    return jsonify(result)
 
-@app.route("/folder/<folder_id>", methods=["PUT"])
+@app.route("/read_folder", methods=["GET"])
 @token_required
-def update_folder_route(folder_id):
+def read_folder_route():
     data = request.json
-    new_name = data.get("name")
-    if not new_name:
-        return jsonify({"error": "Missing new folder name"}), 400
-    if update_folder(folder_id, new_name):
-        return jsonify({"message": "Folder updated"})
+    folder_id = data.get("folder_id")
+    if not folder_id:
+        return jsonify({"error": "Missing folder_id"}), 400
+    result = read_folder(folder_id)
+    if result:
+        return jsonify(result)
     return jsonify({"error": "Folder not found"}), 404
 
-@app.route("/folder/<folder_id>", methods=["DELETE"])
+@app.route("/update_folder", methods=["PUT"])
 @token_required
-def delete_folder_route(folder_id):
-    if delete_folder(folder_id):
-        return jsonify({"message": "Folder deleted"})
-    return jsonify({"error": "Folder not found"}), 404
-
-@app.route("/folder/<folder_id>/add_property", methods=["POST"])
-@token_required
-def add_property_route(folder_id):
+def update_folder_route():
     data = request.json
+    folder_id = data.get("folder_id")
+    name = data.get("name")
+    if not folder_id or not name:
+        return jsonify({"error": "Missing folder_id or name"}), 400
+    result = update_folder(folder_id, name)
+    if result:
+        return jsonify(result)
+    return jsonify({"error": "Folder not found"}), 404
+
+@app.route("/delete_folder", methods=["DELETE"])
+@token_required
+def delete_folder_route():
+    data = request.json
+    folder_id = data.get("folder_id")
+    if not folder_id:
+        return jsonify({"error": "Missing folder_id"}), 400
+    result = delete_folder(folder_id)
+    if result:
+        return jsonify({"message": "Folder deleted successfully"})
+    return jsonify({"error": "Folder not found"}), 404
+
+@app.route("/add_property_to_folder", methods=["POST"])
+@token_required
+def add_property_to_folder_route():
+    data = request.json
+    folder_id = data.get("folder_id")
+    property_data = data.get("property")
+    if not folder_id or property_data is None:
+        return jsonify({"error": "Missing folder_id or property"}), 400
+    result = add_property_to_folder(folder_id, property_data)
+    if result:
+        return jsonify(result)
+    return jsonify({"error": "Folder not found"}), 404
+
+@app.route("/remove_property_from_folder", methods=["DELETE"])
+@token_required
+def remove_property_from_folder_route():
+    data = request.json
+    folder_id = data.get("folder_id")
     property_id = data.get("property_id")
-    if not property_id:
-        return jsonify({"error": "Missing property_id"}), 400
-    if add_property_to_folder(folder_id, property_id):
-        return jsonify({"message": "Property added to folder"})
-    return jsonify({"error": "Folder or property not found"}), 404
-
-@app.route("/folder/<folder_id>/remove_property", methods=["DELETE"])
-@token_required
-def remove_property_route(folder_id):
-    data = request.json
-    property_id = data.get("property_id")
-    if not property_id:
-        return jsonify({"error": "Missing property_id"}), 400
-    if remove_property_from_folder(folder_id, property_id):
-        return jsonify({"message": "Property removed from folder"})
+    if not folder_id or not property_id:
+        return jsonify({"error": "Missing folder_id or property_id"}), 400
+    result = remove_property_from_folder(folder_id, property_id)
+    if result:
+        return jsonify(result)
     return jsonify({"error": "Folder or property not found"}), 404
 
 @app.route("/filter_bradesco", methods=["POST"])

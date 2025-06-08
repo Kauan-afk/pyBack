@@ -4,11 +4,16 @@ import uuid
 
 
     
-cred = credentials.Certificate(r"C:\Users\Kauan\Downloads\pi4-back-main\pi4-back-main\lobotomia-18768-ba54adbffa99.json")
+cred = credentials.Certificate(r"C:\Users\Kauan\Downloads\pi4-back-main\pi4-back-main\lobotomia-18768-firebase-adminsdk-fbsvc-9acae1d622.json")
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://lobotomia-18768-default-rtdb.firebaseio.com/'
     })
+
+def list_folders() -> list | None:
+    ref = db.reference('folders')
+    folders = ref.get()
+    return folders if folders else None
 
 def create_folder(folder_name: str) -> str | None:
     ref = db.reference('folders')
