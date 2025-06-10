@@ -3,11 +3,10 @@ from firebase_admin import credentials, db
 import hashlib
 from Controller.models.user import User
 from Controller.auth.auth_utils import generate_token
-
+from config import cred
 
 if not firebase_admin._apps:
-    cred = credentials.Certificate(r"C:\Users\Kauan\Downloads\pi4-back-main\pi4-back-main\lobotomia-18768-firebase-adminsdk-fbsvc-9acae1d622.json")
-    firebase_admin.initialize_app(cred, {
+ firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://lobotomia-18768-default-rtdb.firebaseio.com/'
     })
 

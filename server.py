@@ -1,18 +1,22 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from waitress import serve
+from Controller.listAll.listAllItau import listAllItau
 from Controller.listAll.listAllBradesco import listAllBradesco
 from Controller.listAll.listAllCaixa import listAllCaixa
+from Controller.listAll.listAllSantander import listAllSantander
 from Controller.auth.register import register
 from Controller.auth.login import login
 from Controller.auth.auth_utils import verify_token
 from Controller.auth.delete_user import delete_user
-from Controller.listAll.test_bradesco_db import upload_test_bradesco, delete_test_bradesco
+from Controller.listAll.test_bradesco_db import upload_all_banks, delete_all_banks
 from Controller.folder.crudFolder import (
     create_folder, list_folders, read_folder, update_folder, delete_folder,
     add_property_to_folder, remove_property_from_folder
 )
 from Controller.filter.filter import filter_bradesco
+from Controller.listAll.listPropertys import list_all_propertys
+from Controller.filter.filter import pickProperty
 
 app = Flask(__name__)
 CORS(app)
@@ -80,12 +84,23 @@ def protected_route():
 
 
 @app.route("/bradesco", methods=["GET"])
-@token_required
+
 def listBradesco():
     return jsonify(listAllBradesco())
 
+@app.route("/itau", methods=["GET"])
+
+def listItau():
+    return jsonify(listAllItau())
+
+@app.route("/santander", methods=["GET"])
+
+def listSantander():
+    return jsonify(listAllSantander())
+
+
 @app.route("/caixa", methods=["GET"])
-@token_required
+
 def listCaixa():
     return jsonify(listAllCaixa())
 
@@ -102,14 +117,14 @@ def delete_user_route():
         return jsonify({"message": "User deleted successfully"})
     return jsonify({"error": "User not found"}), 404
 
-@app.route("/test/upload_bradesco", methods=["POST"])
+@app.route("/test/upload_bradesco")
 def upload_bradesco_route():
-    upload_test_bradesco()
+    upload_all_banks()
     return jsonify({"message": "Test Bradesco data uploaded."})
 
 @app.route("/test/delete_bradesco")
 def delete_bradesco_route():
-    delete_test_bradesco()
+    delete_all_banks()
     return jsonify({"message": "Test Bradesco data deleted."})
 
 @app.route("/create_folder", methods=["POST"])
@@ -128,7 +143,7 @@ def list_folders_route():
     result = list_folders()
     return jsonify(result)
 
-@app.route("/read_folder", methods=["GET"])
+@app.route("/read_folder", methods=["POST"])
 @token_required
 def read_folder_route():
     data = request.json
@@ -139,6 +154,20 @@ def read_folder_route():
     if result:
         return jsonify(result)
     return jsonify({"error": "Folder not found"}), 404
+
+
+@app.route("/pickProperty", methods=["POST"])
+@token_required
+def pick_property_route():
+    data = request.json
+    property_id = data.get("property_id")
+    if not property_id:
+        return jsonify({"error": "Missing property_id"}), 400
+    result = pickProperty(property_id)
+    if result:
+        return jsonify(result)
+    return jsonify({"error": "Property not found"}), 404
+
 
 @app.route("/update_folder", methods=["PUT"])
 @token_required
@@ -169,11 +198,14 @@ def delete_folder_route():
 @token_required
 def add_property_to_folder_route():
     data = request.json
+    print(data)
     folder_id = data.get("folder_id")
-    property_data = data.get("property")
-    if not folder_id or property_data is None:
+    property_id = data.get("property_id")
+    
+
+    if not folder_id or property_id is None:
         return jsonify({"error": "Missing folder_id or property"}), 400
-    result = add_property_to_folder(folder_id, property_data)
+    result = add_property_to_folder(folder_id, property_id)
     if result:
         return jsonify(result)
     return jsonify({"error": "Folder not found"}), 404
@@ -191,23 +223,22 @@ def remove_property_from_folder_route():
         return jsonify(result)
     return jsonify({"error": "Folder or property not found"}), 404
 
-@app.route("/filter_bradesco", methods=["POST"])
-@token_required
-def filter_bradesco_route():
-    data = request.json
-    value = data.get("value")
-    state = data.get("state")
-    city = data.get("city")
-    area = data.get("area")
-    date = data.get("date")
-    results = filter_bradesco(
-        value=value,
-        state=state,
-        city=city,
-        area=area,
-        date=date
-    )
+@app.route("/listPropertys", methods=["GET"])
+def list_propertys_route():
+    results = list_all_propertys()
     return jsonify(results)
+
+@app.route('/filter_bradesco', methods=['POST'])
+def filter_endpoint():
+    data = request.json
+    result = filter_bradesco(
+        min_value=data.get('min_value'),
+        max_value=data.get('max_value'),
+        city=data.get('city'),
+        area=data.get('area'),
+        date=data.get('date')
+    )
+    return jsonify(result)
 
 
 
